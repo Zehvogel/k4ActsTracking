@@ -10,6 +10,7 @@
 #include "Acts/Surfaces/PlaneSurface.hpp"
 #include "Acts/Visualization/GeometryView3D.hpp"
 #include "Acts/Visualization/ObjVisualization3D.hpp"
+#include "Acts/Utilities/Logger.hpp"
 #include "DD4hep/Printout.h"
 #include "GaudiKernel/Service.h"
 #include "TGeoManager.h"
@@ -53,7 +54,8 @@ StatusCode GeoSvc::initialize() {
   double            layerEnvelopeZ        = Acts::UnitConstants::mm;
   double            defaultLayerThickness = Acts::UnitConstants::fm;
   using Acts::sortDetElementsByID;
-  m_trackingGeo = Acts::convertDD4hepDetector(m_dd4hepGeo->world(), m_actsLoggingLevel, bTypePhi, bTypeR, bTypeZ,
+  auto logger = Acts::getDefaultLogger("k4ActsTracking", m_actsLoggingLevel);
+  m_trackingGeo = Acts::convertDD4hepDetector(m_dd4hepGeo->world(), *logger, bTypePhi, bTypeR, bTypeZ,
                                               layerEnvelopeR, layerEnvelopeZ, defaultLayerThickness,
                                               sortDetElementsByID, m_trackingGeoCtx, m_materialDeco);
 
