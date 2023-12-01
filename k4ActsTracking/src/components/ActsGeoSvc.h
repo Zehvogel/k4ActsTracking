@@ -39,13 +39,10 @@
 
 class ActsGeoSvc : public extends<Service, IActsGeoSvc> {
 public:
-  using VolumeSurfaceMap = std::unordered_map<uint64_t, const Acts::Surface*>;
+  using VolumeSurfaceMap = std::map<uint64_t, const Acts::Surface*>;
 
 private:
   dd4hep::Detector* m_dd4hepGeo = nullptr;
-
-  /// DD4hep surface map
-  std::map<int64_t, dd4hep::rec::Surface*> m_surfaceMap;
 
   /// ACTS Logging Level
   Acts::Logging::Level m_actsLoggingLevel = Acts::Logging::INFO;
@@ -86,6 +83,7 @@ public:
   StatusCode createGeoObj();
 
   virtual const Acts::TrackingGeometry& trackingGeometry() const;
+  virtual const VolumeSurfaceMap& surfaceMap() const {return m_surfaces;};
 };
 
 inline const Acts::TrackingGeometry& ActsGeoSvc::trackingGeometry() const { return *m_trackingGeo; }

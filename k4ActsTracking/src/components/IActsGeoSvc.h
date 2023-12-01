@@ -42,6 +42,7 @@ public:
   DeclareInterfaceID(IActsGeoSvc, 1, 0);
 
   virtual const Acts::TrackingGeometry& trackingGeometry() const = 0;
+  virtual const VolumeSurfaceMap& surfaceMap() const = 0;
 
   virtual ~IActsGeoSvc() {}
 };

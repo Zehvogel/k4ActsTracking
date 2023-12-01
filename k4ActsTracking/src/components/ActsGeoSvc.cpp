@@ -55,6 +55,25 @@ StatusCode ActsGeoSvc::initialize() {
                                               layerEnvelopeZ, defaultLayerThickness, sortDetElementsByID,
                                               m_trackingGeoCtx, m_materialDeco);
 
+  if (m_trackingGeo) {
+    m_trackingGeo->visitSurfaces([this](const Acts::Surface* surface) {
+      const auto* det_element =
+        dynamic_cast<const Acts::DD4hepDetectorElement*>(surface->associatedDetectorElement());
+
+      if (det_element == nullptr) {
+        error() << "invalid det_element!!! " << endmsg;
+        return;
+      }
+      // more verbose output is lower enum value
+      debug() << " det_element->identifier() " << det_element->identifier() << endmsg;
+      auto volman  = m_dd4hepGeo->volumeManager();
+      auto* vol_ctx = volman.lookupContext(det_element->identifier());
+      auto vol_id  = vol_ctx->identifier;
+
+      this->m_surfaces.insert_or_assign(vol_id, surface);
+    });
+  }
+
   /// Setting geometry debug option
   if (m_debugGeometry == true) {
     m_log << MSG::INFO << "Geometry debugging is ON." << endmsg;
@@ -69,7 +88,6 @@ StatusCode ActsGeoSvc::initialize() {
     m_log << MSG::VERBOSE << "Geometry debugging is OFF." << endmsg;
     return StatusCode::SUCCESS;
   }
-  std::cout << "works!" << std::endl;
 
   return StatusCode::SUCCESS;
 }
