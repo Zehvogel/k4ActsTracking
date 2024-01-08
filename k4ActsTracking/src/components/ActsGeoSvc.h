@@ -84,7 +84,10 @@ public:
 
   virtual const Acts::TrackingGeometry& trackingGeometry() const;
   virtual const VolumeSurfaceMap& surfaceMap() const {return m_surfaces;};
+  virtual const Acts::GeometryContext& geometryContext() const;
 };
 
 inline const Acts::TrackingGeometry& ActsGeoSvc::trackingGeometry() const { return *m_trackingGeo; }
+inline const Acts::GeometryContext& ActsGeoSvc::geometryContext() const { return m_trackingGeoCtx; }
+
 #endif

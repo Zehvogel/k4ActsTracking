@@ -41,3 +41,8 @@ add_test(NAME CheckODDObjFile
          COMMAND test -s MyObjFile.mtl)
 set_test_env(CheckODDObjFile)
 set_tests_properties(CheckODDObjFile PROPERTIES DEPENDS LoadODD)
+
+add_test(NAME refit
+         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+         COMMAND k4run options/refit.py)
+set_test_env(refit)

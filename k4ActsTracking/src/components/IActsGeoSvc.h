@@ -27,22 +27,26 @@ namespace dd4hep {
   namespace rec {
     class Surface;
   }
+  class Detector;
 }  // namespace dd4hep
 
 namespace Acts {
   class TrackingGeometry;
   class Surface;
+  // class GeometryContext;
 }  // namespace Acts
 
 class GAUDI_API IActsGeoSvc : virtual public IService {
 public:
-  using VolumeSurfaceMap = std::unordered_map<uint64_t, const Acts::Surface*>;
+  using VolumeSurfaceMap = std::map<uint64_t, const Acts::Surface*>;
 
 public:
   DeclareInterfaceID(IActsGeoSvc, 1, 0);
 
   virtual const Acts::TrackingGeometry& trackingGeometry() const = 0;
   virtual const VolumeSurfaceMap& surfaceMap() const = 0;
+
+  virtual const Acts::GeometryContext& geometryContext() const = 0;
 
   virtual ~IActsGeoSvc() {}
 };
