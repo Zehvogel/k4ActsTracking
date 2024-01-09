@@ -44,7 +44,7 @@ StatusCode ACTSRefit::initialize() {
   auto geo = std::make_shared<Acts::TrackingGeometry>(m_actsGeoSvc->trackingGeometry());
   auto field = std::make_shared<Acts::ConstantBField>(Acts::Vector3(0., 0., 2.0 * Acts::UnitConstants::T));
 
-  m_fitter = makeKalmanFitterFunction(geo, field, true, true, 0.0, Acts::FreeToBoundCorrection(), *Acts::getDefaultLogger("Kalman", Acts::Logging::Level::VERBOSE));
+  m_fitter = makeKalmanFitterFunction(geo, field, true, true, 0.0, Acts::FreeToBoundCorrection(), *Acts::getDefaultLogger("Kalman", Acts::Logging::Level::INFO));
 
   return StatusCode::SUCCESS;
 }
@@ -107,8 +107,8 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
     // hopefully this will be the case for all detectors :^), will need a change for stereo angle strips where <u, v> != 0
     // TODO: create cov matrix -> need to match first and second dim of dd4hep surface with those of acts surface...
       Acts::SquareMatrix2 cov = Acts::SquareMatrix2::Zero();
-      cov(0, 0)            = std::pow(hit.getDu() * Acts::UnitConstants::mm, 2);
-      cov(1, 1)            = std::pow(hit.getDv() * Acts::UnitConstants::mm, 2);
+      cov(0, 0)            = hit.getDu() * std::pow(Acts::UnitConstants::mm, 2);
+      cov(1, 1)            = hit.getDv() * std::pow(Acts::UnitConstants::mm, 2);
 
       Acts::Vector2 loc     = Acts::Vector2::Zero();
       loc[Acts::eBoundLoc0] = localPos.x();
@@ -117,7 +117,6 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
       // point to the measurement that we are adding now which index will be current last measurement index plus one i.e. the size
       IndexSourceLink sourceLink{surf->geometryId(), measurements.size()};
       // Acts::SourceLink sourceLink{surf->geometryId()};
-      // just do the simplest thing and use the geometry id as the source link as we will not care about calibration for the next 15-20 years
       auto measurement = Acts::makeMeasurement(Acts::SourceLink{sourceLink}, loc, cov, Acts::eBoundLoc0, Acts::eBoundLoc1);
       measurements.push_back(measurement);
       sourceLinks.push_back(sourceLink);
@@ -152,7 +151,10 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
   params(Acts::eBoundTheta) = Acts::VectorHelpers::theta(a_pos);
   params(Acts::eBoundQOverP) = -1.0 / 1 * Acts::UnitConstants::GeV;
 
-  TrackFitterFunction::TrackParameters initialParams{ipSurface, params, {}, Acts::ParticleHypothesis::pion()};
+  Acts::BoundSquareMatrix initialCov = Acts::BoundSquareMatrix::Constant(0.1);
+  TrackFitterFunction::TrackParameters initialParams{ipSurface, params, initialCov, Acts::ParticleHypothesis::pion()};
+  // TrackFitterFunction::TrackParameters initialParams{ipSurface, params, {}, Acts::ParticleHypothesis::pion()};
+  // TrackFitterFunction::TrackParameters initialParams{ipSurface, params, also_cov, particle_hypothesis];
   std::vector<Acts::SourceLink> trackSourceLinks;
   trackSourceLinks.reserve(sourceLinks.size());
 
@@ -163,7 +165,6 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
   PassThroughCalibrator calib;
   MeasurementCalibratorAdapter calibrator(calib, measurements);
 
-  // FIXME: can not use voidFitterCalibrator urgh
   auto result = (*m_fitter)(trackSourceLinks, initialParams, options, calibrator, tracks);
   if (result.ok()) {
     info() << "track fit ok :o" << endmsg;
