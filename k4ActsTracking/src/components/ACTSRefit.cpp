@@ -44,6 +44,8 @@ StatusCode ACTSRefit::initialize() {
   auto geo = std::make_shared<Acts::TrackingGeometry>(m_actsGeoSvc->trackingGeometry());
   auto field = std::make_shared<Acts::ConstantBField>(Acts::Vector3(0., 0., 2.0 * Acts::UnitConstants::T));
 
+  // verbose dies somewhere because of a surface nullpointer but is still useful if the track fit crashes earlier e.g. during smoothing
+  // m_fitter = makeKalmanFitterFunction(geo, field, true, true, 0.0, Acts::FreeToBoundCorrection(), *Acts::getDefaultLogger("Kalman", Acts::Logging::Level::VERBOSE));
   m_fitter = makeKalmanFitterFunction(geo, field, true, true, 0.0, Acts::FreeToBoundCorrection(), *Acts::getDefaultLogger("Kalman", Acts::Logging::Level::INFO));
 
   return StatusCode::SUCCESS;
@@ -74,14 +76,14 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
     }
     auto geo_ctx = m_actsGeoSvc->geometryContext();
     const Acts::Surface* surf = is->second;
-    info() << "got surface " << surf->toString(m_actsGeoSvc->geometryContext()) << endmsg;
+    // info() << "got surface " << surf->toString(m_actsGeoSvc->geometryContext()) << endmsg;
     Acts::Vector3 actsPos(pos.x, pos.y, pos.z);
     auto localPos = surf->globalToLocal(m_actsGeoSvc->geometryContext(), {pos.x, pos.y, pos.z}, {0, 0, 0}).value();
-    info() << "localPos: (" << localPos.x() << ", " << localPos.y() << ")" << endmsg;
+    // info() << "localPos: (" << localPos.x() << ", " << localPos.y() << ")" << endmsg;
     auto center = surf->center(geo_ctx);
-    info() << "center: (" << center.x() << ", " << center.y() << ", " << center.z() << ")" << endmsg;
+    // info() << "center: (" << center.x() << ", " << center.y() << ", " << center.z() << ")" << endmsg;
     auto localCenter = surf->globalToLocal(geo_ctx, center, {0, 0, 0}).value();
-    info() << "localCenter: (" << localCenter.x() << ", " << localCenter.y() << ")" << endmsg;
+    // info() << "localCenter: (" << localCenter.x() << ", " << localCenter.y() << ")" << endmsg;
 
     const auto iter = m_surfMap->find(volID);
     if (iter == m_surfMap->end()) {
@@ -95,12 +97,12 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
     auto dd_localPos = dd_surf->globalToLocal(dd_pos);
     auto dd_origin = dd_surf->globalToLocal(dd_surf->origin());
     auto origin = dd_surf->origin();
-    info() << "origin: (" << origin.x() << ", " << origin.y() << ", " << origin.z() << ")" << endmsg;
-    info() << "localOrigin: (" << dd_origin.u() << ", " << dd_origin.v() << ")" << endmsg;
-    info() << "dd_localPos: (" << dd_localPos.u() << ", " << dd_localPos.v() << ")" << endmsg;
-    info() << "lengths: (" << dd_surf->length_along_u() << ", " << dd_surf->length_along_v() << ")" << endmsg;
+    // info() << "origin: (" << origin.x() << ", " << origin.y() << ", " << origin.z() << ")" << endmsg;
+    // info() << "localOrigin: (" << dd_origin.u() << ", " << dd_origin.v() << ")" << endmsg;
+    // info() << "dd_localPos: (" << dd_localPos.u() << ", " << dd_localPos.v() << ")" << endmsg;
+    // info() << "lengths: (" << dd_surf->length_along_u() << ", " << dd_surf->length_along_v() << ")" << endmsg;
     auto inbounds = dd_surf->insideBounds(dd_pos) ? "yes" : "no";
-    info() << "dd_localPos inbounds? " << inbounds << endmsg;
+    // info() << "dd_localPos inbounds? " << inbounds << endmsg;
 
     // same results as for acts but factor 10 from unit conversion which I need to be careful with
     // especially nice, ddrec u,v lines up with acts 2d x,y therefore cov is just diag(squared errors)
@@ -124,6 +126,7 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
 
   // TODO: use dd4hep supplied IP surface
   auto ipSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(Acts::Vector3{0., 0., 0.});
+  // TODO: and what about the in front of calo surface?
 
   // TODO: calibrator could be instantiated here
 
@@ -149,9 +152,10 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
   Acts::Vector3 a_pos(pos.x, pos.y, pos.z);
   params(Acts::eBoundPhi) = Acts::VectorHelpers::phi(a_pos);
   params(Acts::eBoundTheta) = Acts::VectorHelpers::theta(a_pos);
-  params(Acts::eBoundQOverP) = -1.0 / 1 * Acts::UnitConstants::GeV;
+  params(Acts::eBoundQOverP) = -1.0 / (1 * Acts::UnitConstants::GeV);
 
   Acts::BoundSquareMatrix initialCov = Acts::BoundSquareMatrix::Constant(0.1);
+  // FIXME: probably better to use a surface that was actually hit by the particle
   TrackFitterFunction::TrackParameters initialParams{ipSurface, params, initialCov, Acts::ParticleHypothesis::pion()};
   // TrackFitterFunction::TrackParameters initialParams{ipSurface, params, {}, Acts::ParticleHypothesis::pion()};
   // TrackFitterFunction::TrackParameters initialParams{ipSurface, params, also_cov, particle_hypothesis];
@@ -171,6 +175,10 @@ TrackCollection ACTSRefit::operator()(const TrackerHitPlaneCollection& input) co
   } else {
     error() << "track fit failed :(" << endmsg;
   }
+
+  // TODO: take fitted track parameters and convert them to an edm4hep::Track!!
+  auto track = result.value();
+  info() << "track momentum, theta: " << track.absoluteMomentum() << ", " << track.theta() << endmsg;
 
   auto coll_out = TrackCollection();
   return coll_out;

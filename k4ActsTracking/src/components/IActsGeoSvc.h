@@ -33,7 +33,10 @@ namespace dd4hep {
 namespace Acts {
   class TrackingGeometry;
   class Surface;
+  class ContextType;
   // class GeometryContext;
+  // XXX: there _must_ be a better way to do this
+  using GeometryContext = ContextType;
 }  // namespace Acts
 
 class GAUDI_API IActsGeoSvc : virtual public IService {

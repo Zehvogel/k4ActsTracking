@@ -46,3 +46,8 @@ add_test(NAME refit
          WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
          COMMAND k4run options/refit.py)
 set_test_env(refit)
+
+add_test(NAME truthtrack
+         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+         COMMAND k4run options/truthtrack.py)
+set_test_env(truthtrack)
