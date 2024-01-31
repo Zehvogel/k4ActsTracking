@@ -44,6 +44,8 @@ StatusCode TruthTracking::initialize() {
 
   auto geo = std::make_shared<Acts::TrackingGeometry>(m_actsGeoSvc->trackingGeometry());
   // FIXME: use dd4hep supplied field
+  // https://github.com/acts-project/acts/pull/2593
+  // and distribute it via the ActsGeoSvc
   auto field = std::make_shared<Acts::ConstantBField>(Acts::Vector3(0., 0., 2.0 * Acts::UnitConstants::T));
 
   // verbose dies somewhere because of a surface nullpointer but is still useful if the track fit crashes earlier e.g. during smoothing
@@ -95,12 +97,12 @@ std::tuple<TrackCollection> TruthTracking::operator()(
   for (auto&& [mcp_idx, recHits] : hitMap) {
     // sort hits?
     // FIXME: what about spiraling tracks?? TruthTrackFinder only sorts hits if first fit attempt fails
-    std::sort(recHits.begin(), recHits.end(), [](const TrackerHitPlane& hit1, const TrackerHitPlane& hit2) {
-      const auto& pos1 = hit1.getPosition();
-      const auto& pos2 = hit2.getPosition();
-      using edm4hep::utils::magnitudeTransverse;
-      return magnitudeTransverse(pos1) < magnitudeTransverse(pos2);
-    });
+    // std::sort(recHits.begin(), recHits.end(), [](const TrackerHitPlane& hit1, const TrackerHitPlane& hit2) {
+    //   const auto& pos1 = hit1.getPosition();
+    //   const auto& pos2 = hit2.getPosition();
+    //   using edm4hep::utils::magnitudeTransverse;
+    //   return magnitudeTransverse(pos1) < magnitudeTransverse(pos2);
+    // });
 
     // do all the ugly conversion and setup stuff
     // iterate over recHits and create measurements and sourceLinks

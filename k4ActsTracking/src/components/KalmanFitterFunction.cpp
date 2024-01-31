@@ -1,6 +1,8 @@
 #include "Acts/Propagator/EigenStepper.hpp"
 #include "Acts/TrackFitting/GainMatrixSmoother.hpp"
 #include "Acts/TrackFitting/GainMatrixUpdater.hpp"
+// for v32
+#include "Acts/Propagator/Navigator.hpp"
 
 #include "TrackFitterFunction.h"
 // #include "Calibrator.h"
