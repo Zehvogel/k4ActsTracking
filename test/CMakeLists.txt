@@ -36,6 +36,11 @@ add_test(NAME LoadODD
          COMMAND k4run options/geosvc.py)
 set_test_env(LoadODD)
 
+add_test(NAME LoadODD_new
+         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+         COMMAND k4run options/geosvc_new.py)
+set_test_env(LoadODD_new)
+
 add_test(NAME CheckODDObjFile
          WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
          COMMAND test -s MyObjFile.mtl)

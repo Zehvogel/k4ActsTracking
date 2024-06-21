@@ -54,6 +54,8 @@ inp = PodioInput("InputReader")
 # ]
 
 transformer = TruthTracking("TruthTracking")
+transformer.TrackerHitCollection = "ShortStripBarrelTrackerHits"
+transformer.TrackerHitAssociations = "ShortStripBarrelTrackerHitRelations"
 transformer.OutputLevel = DEBUG
 
 ApplicationMgr(TopAlg=[inp, transformer, out],
